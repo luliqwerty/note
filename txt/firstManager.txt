@@ -1,0 +1,323 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class StudentManagementSystem extends JFrame {
+    private static List<Student> students;
+    private static JTextField nameField, studentIdField, classNameField, mathField, englishField, csIntroField, peField;
+    private static JTextArea displayArea;
+
+    public static List<Student> getStudents() {
+        return students;
+    }
+
+    public static JTextField getNameField() {
+        return nameField;
+    }
+
+    public static JTextField getStudentIdField() {
+        return studentIdField;
+    }
+
+    public static JTextField getClassNameField() {
+        return classNameField;
+    }
+
+    public static JTextField getMathField() {
+        return mathField;
+    }
+
+    public static JTextField getEnglishField() {
+        return englishField;
+    }
+
+    public static JTextField getCsIntroField() {
+        return csIntroField;
+    }
+
+    public static JTextField getPeField() {
+        return peField;
+    }
+
+    public static JTextArea getDisplayArea() {
+        return displayArea;
+    }
+
+    public StudentManagementSystem() {
+        // 导入文件
+        students = loadStudents();
+        // 创建窗口
+        setupUI();
+    }
+
+    private void setupUI() {
+        setTitle("学生成绩管理系统");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocation(500, 300);
+        setLayout(new BorderLayout());
+
+        JPanel inputPanel = new JPanel(new GridLayout(10, 2));
+        inputPanel.add(new JLabel("姓名:"));
+        nameField = new JTextField();
+        inputPanel.add(nameField);
+
+        inputPanel.add(new JLabel("学号:"));
+        studentIdField = new JTextField();
+        inputPanel.add(studentIdField);
+
+        inputPanel.add(new JLabel("班级:"));
+        classNameField = new JTextField();
+        inputPanel.add(classNameField);
+
+        inputPanel.add(new JLabel("高等数学成绩:"));
+        mathField = new JTextField();
+        inputPanel.add(mathField);
+
+        inputPanel.add(new JLabel("大学英语成绩:"));
+        englishField = new JTextField();
+        inputPanel.add(englishField);
+
+        inputPanel.add(new JLabel("计算机导论成绩:"));
+        csIntroField = new JTextField();
+        inputPanel.add(csIntroField);
+
+        inputPanel.add(new JLabel("体育成绩:"));
+        peField = new JTextField();
+        inputPanel.add(peField);
+
+        JButton allStudentButton = new JButton("显示所有学生");
+        allStudentButton.addActionListener(new AllStudentButton());
+        inputPanel.add(allStudentButton);
+
+        JButton addButton = new JButton("添加学生");
+        addButton.addActionListener(new AddButtonListener());
+        inputPanel.add(addButton);
+
+        JButton modifyButton = new JButton("修改学生");
+        modifyButton.addActionListener(new ModifyButtonListener());
+        inputPanel.add(modifyButton);
+
+        JButton deleteButton = new JButton("删除学生");
+        deleteButton.addActionListener(new DeleteButtonListener());
+        inputPanel.add(deleteButton);
+
+        JButton queryButton = new JButton("查询学生");
+        queryButton.addActionListener(new QueryButtonListener());
+        inputPanel.add(queryButton);
+
+        JButton queryFailButton = new JButton("查询不及格学生");
+        queryFailButton.addActionListener(new QueryFailButtonListener());
+        inputPanel.add(queryFailButton);
+
+        displayArea = new JTextArea();
+        displayArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(displayArea);
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+    }
+
+    public static List<Student> loadStudents() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("students.dat"))) {
+            return (List<Student>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public static void saveStudents() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("students.dat"))) {
+            oos.writeObject(students);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 判断是否所有的输入框都有输入且输入正确
+    public static boolean check() {
+        if(nameField.getText().equals("")) {
+            return false;
+        }
+        if(studentIdField.getText().equals("")) {
+            return false;
+        }
+        if(classNameField.getText().equals("")) {
+            return false;
+        }
+        if (!mathField.getText().matches("^\\d+(\\.\\d+)?$")) {
+            return false;
+        }
+        if(!englishField.getText().matches("^\\d+(\\.\\d+)?$")) {
+            return false;
+        }
+        if(!csIntroField.getText().matches("^\\d+(\\.\\d+)?$")) {
+            return false;
+        }
+        if(!peField.getText().matches("^\\d+(\\.\\d+)?$")) {
+            return false;
+        }
+        return true;
+    }
+
+    // 显示所有学生信息 \complete
+    private class AllStudentButton implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            boolean f = true;
+            String studentId = studentIdField.getText();
+            for (Student s : students) {
+                displayArea.append(s.toString() + '\n');
+                f = false;
+            }
+            if(f) {
+                displayArea.append("文件中还没有存储学生信息");
+            }
+            displayArea.append("\n");
+        }
+    }
+
+    // add student \complete
+    private class AddButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if(!check()) {
+                displayArea.append("请正确输入学生所有的信息\n");
+                return;
+            }
+
+            String name = nameField.getText();
+            String studentId = studentIdField.getText();
+            String className = classNameField.getText();
+            double mathScore = Double.parseDouble(mathField.getText());
+            double englishScore = Double.parseDouble(englishField.getText());
+            double csIntroScore = Double.parseDouble(csIntroField.getText());
+            double peScore = Double.parseDouble(peField.getText());
+
+            for (Student s : students) {
+                if (s.getStudentId().equals(studentId)) {
+                    JOptionPane.showMessageDialog(null, "学号已存在！");
+                    return;
+                }
+            }
+
+            Student student = new Student(name, studentId, className, mathScore, englishScore, csIntroScore, peScore);
+            students.add(student);
+            saveStudents();
+
+            displayArea.append("添加学生：" + name + "\n");
+        }
+    }
+
+    // delete student \complete
+    private class DeleteButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String studentId = studentIdField.getText();
+            for (Student s : students) {
+                if (s.getStudentId().equals(studentId)) {
+                    students.remove(s);
+                    saveStudents();
+                    displayArea.append("删除学生：" + s.getName() + "\n");
+                    return;
+                }
+            }
+            JOptionPane.showMessageDialog(null, "未找到该学号的学生！");
+        }
+    }
+    // modify student \complete
+    private class ModifyButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String studentId = studentIdField.getText();
+            for (Student s : students) {
+                if (s.getStudentId().equals(studentId)) {
+                    if(!check()) {
+                        displayArea.append("请完整输入学生信息\n");
+                    }
+                    s.setName(nameField.getText());
+                    s.setClassName(classNameField.getText());
+                    s.setMathScore(Double.parseDouble(mathField.getText()));
+                    s.setEnglishScore(Double.parseDouble(englishField.getText()));
+                    s.setCsIntroScore(Double.parseDouble(csIntroField.getText()));
+                    s.setPeScore(Double.parseDouble(peField.getText()));
+                    saveStudents();
+                    displayArea.append("修改学生：" + s.getStudentId() + "\n");
+                    return;
+                }
+            }
+            JOptionPane.showMessageDialog(null, "未找到该学号的学生！");
+        }
+    }
+
+    // search student by ID \complete
+    private class QueryButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String studentId = studentIdField.getText();
+            for (Student s : students) {
+                if (s.getStudentId().equals(studentId)) {
+                    displayArea.append("查询学生：" + s.getName() + "\n");
+                    displayArea.append("学号：" + s.getStudentId() + "\n");
+                    displayArea.append("班级：" + s.getClassName() + "\n");
+                    displayArea.append("高等数学成绩：" + s.getMathScore() + "\n");
+                    displayArea.append("大学英语成绩：" + s.getEnglishScore() + "\n");
+                    displayArea.append("计算机导论成绩：" + s.getCsIntroScore() + "\n");
+                    displayArea.append("体育成绩：" + s.getPeScore() + "\n");
+                    return;
+                }
+            }
+            JOptionPane.showMessageDialog(null, "未找到该学号的学生！");
+        }
+    }
+
+    // search fail student by entering an curriculum name among 高等数学，大学英语，计算机导论，体育
+    private class QueryFailButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String courseName = JOptionPane.showInputDialog("输入课程名称:");
+            if (courseName == null) return;
+
+            displayArea.append("查询课程不及格学生：" + courseName + "\n");
+            boolean f = true;
+            for (Student s : students) {
+                double score;
+                switch (courseName) {
+                    case "高等数学":
+                        score = s.getMathScore();
+                        break;
+                    case "大学英语":
+                        score = s.getEnglishScore();
+                        break;
+                    case "计算机导论":
+                        score = s.getCsIntroScore();
+                        break;
+                    case "体育":
+                        score = s.getPeScore();
+                        break;
+                    default:
+                        JOptionPane.showMessageDialog(null, "课程名称无效！");
+                        return;
+                }
+                if (score < 60) {
+                    f = false;
+                    displayArea.append(s.getName() + " (" + s.getStudentId() + "): " + score + "\n");
+                }
+            }
+            if(f) {
+                displayArea.append(courseName + "没有不及格学生");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            StudentManagementSystem sms = new StudentManagementSystem();
+            sms.setVisible(true);
+        });
+    }
+}
